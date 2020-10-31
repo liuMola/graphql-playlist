@@ -3,39 +3,57 @@ const e = require("express");
 const graphql = require("graphql");
 const _ = require("lodash");
 
-const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLInt } = graphql;
 
-var books = [
-    { name: "dasd", genre: "asd", id: "1" },
-    { name: "dwwwasd", genre: "aaaaasd", id: "2" },
-    { name: "daqqqqsd", genre: "addddsd", id: "3" }
+const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLInt, GraphQLList, GraphQLID } = graphql;
+
+const books = [
+    { name: 'Name of the Wind', genre: 'Fantasy', id: '1', authorId: '1' },
+    { name: 'The Final Empire', genre: 'Fantasy', id: '2', authorId: '2' },
+    { name: 'The Hero of Ages', genre: 'Fantasy', id: '4', authorId: '2' },
+    { name: 'The Long Earth', genre: 'Sci-Fi', id: '3', authorId: '3' },
+    { name: 'The Colour of Magic', genre: 'Fantasy', id: '5', authorId: '3' },
+    { name: 'The Light Fantastic', genre: 'Fantasy', id: '6', authorId: '3' },
 ];
 
-var authors = [
-    { name: "daaasd", age: 1023, id: "1" },
-    { name: "dwwwasosd sd", age: 132190, id: "2" },
-    { name: "d1plpqqsd", age: 88995, id: "3" }
-]
+const authors = [
+    { name: 'Patrick Rothfuss', age: 44, id: '1' },
+    { name: 'Brandon Sanderson', age: 42, id: '2' },
+    { name: 'Terry Pratchett', age: 66, id: '3' }
+];
 
-//Book and author types
+// Book and author types
 const BookType = new GraphQLObjectType({
     name: "Book",
     //passed a function, so the things inside of function can recognize each other
     fields: () => ({
         //Define what kind of type they are. and since we're using graphQL, it doesn't know what string is, so we grab (require) them from lib, which is graphQL.
-        id: { type: GraphQLString },
+        id: { type: GraphQLID },
         name: { type: GraphQLString },
-        genre: { type: GraphQLString }
+        genre: { type: GraphQLString },
+        author: {
+            type: AuthorType,
+            resolve(parent, args) {
+                return _.find(authors, { id: parent.authorId })
+            }
+        }
     })
 });
 const AuthorType = new GraphQLObjectType({
     name: "Author",
     fields: () => ({
-        id: { type: GraphQLString },
+        id: { type: GraphQLID },
         name: { type: GraphQLString },
-        age: { type: GraphQLInt }
+        age: { type: GraphQLInt },
+        books: {
+            //not just a book, but a list of books, so we gotta use GraphQLList from graphql
+            type: new GraphQLList(BookType),
+            resolve(parent, args) {
+                return books.filter(bk => bk.authorId === parent.id)
+            }
+        }
     })
 });
+
 
 //root query
 const RootQuery = new GraphQLObjectType({
@@ -54,6 +72,18 @@ const RootQuery = new GraphQLObjectType({
             args: { id: { type: GraphQLString } },
             resolve(parent, args) {
                 return _.find(authors, { id: args.id })
+            }
+        },
+        books: {
+            type: new GraphQLList(BookType),
+            resolve(parent, args) {
+                return books
+            }
+        },
+        authors: {
+            type: new GraphQLList(AuthorType),
+            resolve(parent, args) {
+                return authors
             }
         }
     }
