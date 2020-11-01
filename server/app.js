@@ -12,7 +12,7 @@ mongoose
     .then(() => console.log("Connected to MongoDB Atlas"))
     .catch(err => console.log("Error: ", err.message));
 const app = express();
-//use(router of endpoint, function that handle know how to  handle the graphql request)
+//use(router of endpoint, function that handle know how to handle the graphql request)
 app.use("/graphql", graphqlHTTP({
     schema: schema,
     graphiql: true
